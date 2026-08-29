@@ -3,3 +3,5 @@
 .phpunit.result.cache
 composer.lock
 .env
+examples/.env
+/storage/
