@@ -29,7 +29,16 @@ use Illuminate\Http\Request;
  */
 class GowaInstance extends Model
 {
-    protected $guarded = [];
+    protected $fillable = [
+        'name',
+        'device_id',
+        'status',
+        'phone_number',
+        'webhook_secret',
+        'meta',
+        'connected_at',
+        'last_seen_at',
+    ];
 
     protected function casts(): array
     {
@@ -65,9 +74,9 @@ class GowaInstance extends Model
         }
 
         return WebhookSignature::verify(
-            payload: $request->getContent(),
-            signature: (string) $request->header('X-Gowa-Signature', ''),
-            secret: $this->webhook_secret,
+            $request->getContent(),
+            (string) $request->header('X-Gowa-Signature', ''),
+            $this->webhook_secret,
         );
     }
 

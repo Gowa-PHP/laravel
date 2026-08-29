@@ -14,11 +14,34 @@ jobs:
       matrix:
         php: ['8.2', '8.3', '8.4']
         laravel: ['10.*', '11.*', '12.*']
+        database: ['sqlite', 'mysql', 'pgsql']
         exclude:
           - php: '8.2'
             laravel: '12.*'
 
-    name: PHP ${{ matrix.php }} — Laravel ${{ matrix.laravel }}
+    name: PHP ${{ matrix.php }} — Laravel ${{ matrix.laravel }} — ${{ matrix.database }}
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_DATABASE: gowa_test
+          MYSQL_USER: gowa
+          MYSQL_PASSWORD: gowa_secret
+          MYSQL_ROOT_PASSWORD: root
+        ports:
+          - 3336:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=5s --health-timeout=5s --health-retries=5
+
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: gowa_test
+          POSTGRES_USER: gowa
+          POSTGRES_PASSWORD: gowa_secret
+        ports:
+          - 5436:5432
+        options: --health-cmd="pg_isready -U gowa -d gowa_test" --health-interval=5s --health-timeout=5s --health-retries=5
 
     steps:
       - name: Checkout Code
@@ -28,11 +51,13 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
-          extensions: json, hash, mbstring, dom, xml, xmlwriter
+          extensions: json, hash, mbstring, dom, xml, xmlwriter, pdo, pdo_sqlite, pdo_mysql, pdo_pgsql
           coverage: none
 
       - name: Install Composer Dependencies
         run: composer install --prefer-dist --no-progress --no-interaction
 
       - name: Run Tests
+        env:
+          DB_CONNECTION: ${{ matrix.database }}
         run: vendor/bin/pest

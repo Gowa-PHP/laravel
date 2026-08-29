@@ -11,8 +11,15 @@ use Illuminate\Notifications\Notification;
  * Laravel Notification Channel for GOWA WhatsApp.
  *
  * Your Notification must implement `toGowa(mixed $notifiable): GowaMessage`.
- * Your notifiable must implement `routeNotificationForGowa(): string`
- * returning the destination phone number or JID.
+ *
+ * Your notifiable must implement:
+ *
+ * ```php
+ * public function routeNotificationForGowa(): array
+ * {
+ *     return ['device' => $this->gowa_device_id, 'to' => $this->phone];
+ * }
+ * ```
  */
 class GowaChannel
 {
@@ -26,17 +33,18 @@ class GowaChannel
             return;
         }
 
-        $to = method_exists($notifiable, 'routeNotificationForGowa')
+        /** @var array{device: string, to: string}|null $route */
+        $route = method_exists($notifiable, 'routeNotificationForGowa')
             ? $notifiable->routeNotificationForGowa($notification)
             : null;
 
-        if (empty($to)) {
+        if (empty($route['device']) || empty($route['to'])) {
             return;
         }
 
         /** @var GowaMessage $message */
         $message = $notification->toGowa($notifiable);
 
-        $message->send($this->client, $to);
+        $message->send($this->client, $route);
     }
 }

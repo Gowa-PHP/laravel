@@ -1,6 +1,6 @@
 {
     "name": "gowa-php/laravel",
-    "description": "Laravel integration for GOWA — GowaClient Facade, Notification Channel, Webhook routing, and Eloquent models",
+    "description": "Laravel integration for GOWA \u2014 GowaClient Facade, Notification Channel, Webhook routing, and Eloquent models",
     "type": "library",
     "license": "MIT",
     "authors": [
@@ -11,14 +11,16 @@
     ],
     "repositories": [
         {
-            "type": "path",
-            "url": "../gowa-php",
-            "options": {"symlink": true}
+            "type": "vcs",
+            "url": "https://github.com/Gowa-PHP/sdk",
+            "options": {
+                "symlink": true
+            }
         }
     ],
     "require": {
         "php": "^8.2",
-        "gowa-php/sdk": "*@dev",
+        "gowa-php/sdk": "^1.1",
         "illuminate/contracts": "^10.0|^11.0|^12.0",
         "illuminate/support": "^10.0|^11.0|^12.0"
     },
@@ -56,6 +58,9 @@
         }
     },
     "scripts": {
-        "test": "vendor/bin/pest"
+        "test": "vendor/bin/pest",
+        "test:sqlite": "DB_CONNECTION=sqlite vendor/bin/pest",
+        "test:mysql": "DB_CONNECTION=mysql vendor/bin/pest",
+        "test:pgsql": "DB_CONNECTION=pgsql vendor/bin/pest"
     }
 }

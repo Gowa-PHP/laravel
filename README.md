@@ -1,4 +1,5 @@
 <div align="center">
+  <img src="art/banner.png" alt="gowa-laravel Banner" width="100%" max-width="800">
 
   # gowa-php/laravel
 
@@ -15,6 +16,16 @@
 ---
 
 > 🇧🇷 Para ler a documentação em Português, acesse [README.pt.md](README.pt.md).
+
+---
+
+## ⚡ Acknowledgments & Dependencies
+
+This package interacts with the Go backend ecosystem created by the open-source community:
+
+- **[whatsmeow](https://go.mau.fi/whatsmeow)** — The underlying Go library created by [Tulir Asokan](https://github.com/tulir) that reverse-engineers the WhatsApp Web Multi-Device WebSocket protocol and Signal encryption.
+- **[go-whatsapp-web-multidevice (GOWA)](https://github.com/aldinokemal/go-whatsapp-web-multidevice)** — The lightweight REST API wrapper created by [Aldino Kemal](https://github.com/aldinokemal) exposing `whatsmeow` over HTTP and Webhooks.
+- **[gowa-php/sdk](https://packagist.org/packages/gowa-php/sdk)** — The underlying PHP SDK for GOWA.
 
 ---
 
@@ -177,9 +188,32 @@ Publish and re-run migrations after enabling this setting.
 
 ## Running Tests
 
+By default, tests run using SQLite in-memory without requiring any external services:
+
 ```bash
-vendor/bin/pest
+composer test
+# or explicitly:
+composer test:sqlite
 ```
+
+To run tests against MySQL and PostgreSQL using Docker:
+
+```bash
+# Start MySQL and PostgreSQL containers
+docker compose up -d
+
+# Run test suites against specific database drivers
+composer test:mysql
+composer test:pgsql
+```
+
+## ⚠️ Disclaimer & Terms of Use
+
+This software is an open-source library created for **educational, research, and testing laboratory purposes**.
+
+- **Third-Party Terms of Service**: Users of this library are solely responsible for complying with WhatsApp's Terms of Service, Meta's Platform Policies, and the terms of any third-party services utilized.
+- **Automated Messaging & Policy Compliance**: Automated or unauthorized messaging may violate platform terms. Users must ensure strict compliance with applicable privacy laws (e.g., GDPR, LGPD), user consent requirements, and platform guidelines.
+- **No Warranty & Liability**: This software is provided "as is", without warranty of any kind, express or implied. The authors and contributors assume no liability for any account bans, data loss, service interruptions, or misuse of this library.
 
 ## License
 

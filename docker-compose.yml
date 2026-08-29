@@ -1,0 +1,35 @@
+name: gowa-laravel
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: gowa_mysql
+    restart: unless-stopped
+    ports:
+      - '${DB_MYSQL_PORT:-3336}:3306'
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE:-gowa_test}
+      MYSQL_USER: ${DB_USERNAME:-gowa}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-gowa_secret}
+      MYSQL_ROOT_PASSWORD: root
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: gowa_postgres
+    restart: unless-stopped
+    ports:
+      - '${DB_PGSQL_PORT:-5436}:5432'
+    environment:
+      POSTGRES_DB: ${DB_DATABASE:-gowa_test}
+      POSTGRES_USER: ${DB_USERNAME:-gowa}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-gowa_secret}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gowa -d gowa_test"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
