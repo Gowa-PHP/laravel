@@ -11,26 +11,35 @@ use Gowa\Sdk\GowaClient;
 /**
  * Fluent message builder for the GOWA notification channel.
  *
- * @example
- * GowaMessage::create('Hello!')
- * GowaMessage::create()->media($payload, 'caption')
- * GowaMessage::create()->location($locationPayload)
+ * Usage in your Notification:
+ *
+ * ```php
+ * public function toGowa(mixed $notifiable): GowaMessage
+ * {
+ *     return GowaMessage::create('Hello!');
+ * }
+ * ```
+ *
+ * Your notifiable must implement:
+ *
+ * ```php
+ * public function routeNotificationForGowa(): array
+ * {
+ *     return ['device' => $this->gowa_device_id, 'to' => $this->phone];
+ * }
+ * ```
  */
 class GowaMessage
 {
     private ?string $text = null;
     private ?MediaPayload $media = null;
-    private ?string $caption = null;
     private ?LocationPayload $location = null;
     private ?string $replyTo = null;
 
-    public static function create(string $text = ''): self
+    public static function create(?string $text = null): self
     {
         $instance = new self;
-
-        if ($text !== '') {
-            $instance->text = $text;
-        }
+        $instance->text = $text;
 
         return $instance;
     }
@@ -42,10 +51,9 @@ class GowaMessage
         return $this;
     }
 
-    public function media(MediaPayload $media, ?string $caption = null): self
+    public function media(MediaPayload $media): self
     {
         $this->media = $media;
-        $this->caption = $caption;
 
         return $this;
     }
@@ -64,22 +72,28 @@ class GowaMessage
         return $this;
     }
 
-    public function send(GowaClient $client, string $to): void
+    /**
+     * @param array{device: string, to: string} $route
+     */
+    public function send(GowaClient $client, array $route): void
     {
+        $deviceId = $route['device'];
+        $to = $route['to'];
+
         if ($this->location !== null) {
-            $client->sendLocation($to, $this->location);
+            $client->sendLocation($deviceId, $to, $this->location);
 
             return;
         }
 
         if ($this->media !== null) {
-            $client->sendMedia($to, $this->media, $this->caption, $this->replyTo);
+            $client->sendMedia($deviceId, $to, $this->media, $this->replyTo);
 
             return;
         }
 
         if ($this->text !== null) {
-            $client->sendText($to, $this->text, $this->replyTo);
+            $client->sendText($deviceId, $to, $this->text, $this->replyTo);
         }
     }
 }
