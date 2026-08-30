@@ -11,6 +11,7 @@ use Gowa\Sdk\Security\WebhookSignature;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 /**
  * A paired WhatsApp device managed by the GOWA server.
@@ -48,6 +49,15 @@ class GowaInstance extends Model
             'connected_at' => 'immutable_datetime',
             'last_seen_at' => 'immutable_datetime',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        static::creating(function (self $instance): void {
+            if (empty($instance->device_id)) {
+                $instance->device_id = (string) Str::uuid7();
+            }
+        });
     }
 
     public function getTable(): string
