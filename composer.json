@@ -9,15 +9,6 @@
             "email": "aguinaldo.tupy@gmail.com"
         }
     ],
-    "repositories": [
-        {
-            "type": "vcs",
-            "url": "https://github.com/Gowa-PHP/sdk",
-            "options": {
-                "symlink": true
-            }
-        }
-    ],
     "require": {
         "php": "^8.2",
         "gowa-php/sdk": "^1.1",
