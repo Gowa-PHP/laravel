@@ -12,12 +12,13 @@ use Illuminate\Notifications\Notification;
  *
  * Your Notification must implement `toGowa(mixed $notifiable): GowaMessage`.
  *
- * Your notifiable must implement:
+ * Your notifiable must implement `routeNotificationForGowa()` or `routeNotificationFor('gowa')`:
  *
  * ```php
- * public function routeNotificationForGowa(): array
+ * public function routeNotificationForGowa(): array|string
  * {
  *     return ['device' => $this->gowa_device_id, 'to' => $this->phone];
+ *     // or return $this->phone;
  * }
  * ```
  */
@@ -33,18 +34,35 @@ class GowaChannel
             return;
         }
 
-        /** @var array{device: string, to: string}|null $route */
+        /** @var array{device?: string, to?: string}|string|null $route */
         $route = method_exists($notifiable, 'routeNotificationForGowa')
             ? $notifiable->routeNotificationForGowa($notification)
-            : null;
+            : ($notifiable->routeNotificationFor('gowa', $notification) ?? null);
 
-        if (empty($route['device']) || empty($route['to'])) {
+        if (is_string($route)) {
+            $route = ['to' => $route];
+        }
+
+        if (empty($route['to'])) {
+            return;
+        }
+
+        if (empty($route['device'])) {
+            $instanceModel = config('gowa.models.instance', \Gowa\Laravel\Models\GowaInstance::class);
+            $defaultInstance = $instanceModel::query()->first();
+            $route['device'] = config('gowa.default_device_id') ?: ($defaultInstance?->device_id ?? '');
+        }
+
+        if (empty($route['device'])) {
             return;
         }
 
         /** @var GowaMessage $message */
         $message = $notification->toGowa($notifiable);
 
-        $message->send($this->client, $route);
+        $message->send($this->client, [
+            'device' => (string) $route['device'],
+            'to' => (string) $route['to'],
+        ]);
     }
 }
