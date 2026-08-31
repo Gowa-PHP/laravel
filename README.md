@@ -34,6 +34,7 @@ This package interacts with the Go backend ecosystem created by the open-source 
 - PHP >= 8.2
 - Laravel 10, 11, or 12
 - [`gowa-php/sdk`](https://packagist.org/packages/gowa-php/sdk) ^1.0
+- A running instance of the **[GOWA (go-whatsapp-web-multidevice)](https://github.com/aldinokemal/go-whatsapp-web-multidevice)** REST API server (`GOWA_BASE_URL`)
 
 ## Installation
 
