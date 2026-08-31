@@ -83,9 +83,17 @@ class GowaInstance extends Model
             return true;
         }
 
+        $signatureHeader = (string) (
+            $request->header('X-Hub-Signature-256')
+            ?? $request->header('X-Gowa-Signature')
+            ?? $request->header('X-Signature-256')
+            ?? $request->header('X-Hub-Signature')
+            ?? ''
+        );
+
         return WebhookSignature::verify(
             $request->getContent(),
-            (string) $request->header('X-Gowa-Signature', ''),
+            $signatureHeader,
             $this->webhook_secret,
         );
     }
