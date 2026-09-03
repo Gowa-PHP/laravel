@@ -60,4 +60,11 @@ abstract class TestCase extends OrchestraTestCase
             'sslmode'  => 'prefer',
         ]);
     }
+
+    protected function tearDown(): void
+    {
+        \Gowa\Laravel\Facades\Gowa::$runsMigrations = true;
+
+        parent::tearDown();
+    }
 }

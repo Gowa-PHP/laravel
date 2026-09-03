@@ -43,9 +43,12 @@ class GowaServiceProvider extends ServiceProvider
             ], 'gowa-migrations');
         }
 
-        $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
+        if (\Gowa\Laravel\Facades\Gowa::$runsMigrations && config('gowa.migrations', true)) {
+            $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
+        }
 
         $this->registerWebhookRoute();
+        $this->registerWebhookListeners();
     }
 
     private function registerWebhookRoute(): void
@@ -58,5 +61,23 @@ class GowaServiceProvider extends ServiceProvider
 
         Route::post("{$path}/{deviceId}", GowaWebhookController::class)
             ->name('gowa.webhook');
+    }
+
+    private function registerWebhookListeners(): void
+    {
+        \Illuminate\Support\Facades\Event::listen(
+            \Gowa\Laravel\Webhook\Events\GowaMessageReceived::class,
+            \Gowa\Laravel\Webhook\Listeners\SyncIncomingMessage::class,
+        );
+
+        \Illuminate\Support\Facades\Event::listen(
+            \Gowa\Laravel\Webhook\Events\GowaMessageAck::class,
+            \Gowa\Laravel\Webhook\Listeners\SyncMessageAck::class,
+        );
+
+        \Illuminate\Support\Facades\Event::listen(
+            \Gowa\Laravel\Webhook\Events\GowaWebhookReceived::class,
+            \Gowa\Laravel\Webhook\Listeners\LogWebhookRequest::class,
+        );
     }
 }

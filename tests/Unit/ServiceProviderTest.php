@@ -27,5 +27,16 @@ test('config is merged with package defaults', function () {
 test('config models point to package models by default', function () {
     expect(config('gowa.models.instance'))->toBe(\Gowa\Laravel\Models\GowaInstance::class)
         ->and(config('gowa.models.conversation'))->toBe(\Gowa\Laravel\Models\GowaConversation::class)
-        ->and(config('gowa.models.message'))->toBe(\Gowa\Laravel\Models\GowaMessage::class);
+        ->and(config('gowa.models.message'))->toBe(\Gowa\Laravel\Models\GowaMessage::class)
+        ->and(config('gowa.models.webhook_call'))->toBe(\Gowa\Laravel\Models\GowaWebhookCall::class);
 });
+
+test('Gowa::ignoreMigrations disables migration loading', function () {
+    \Gowa\Laravel\Facades\Gowa::ignoreMigrations();
+
+    expect(\Gowa\Laravel\Facades\Gowa::$runsMigrations)->toBeFalse();
+
+    // Reset back for other tests
+    \Gowa\Laravel\Facades\Gowa::$runsMigrations = true;
+});
+
