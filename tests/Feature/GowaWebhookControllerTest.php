@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 use Gowa\Laravel\Models\GowaInstance;
 use Gowa\Laravel\Webhook\Events\GowaMessageAck;
-use Gowa\Laravel\Webhook\Events\GowaMessageReceived;
 use Gowa\Laravel\Webhook\Events\GowaMessageReaction;
+use Gowa\Laravel\Webhook\Events\GowaMessageReceived;
 use Gowa\Laravel\Webhook\Events\GowaWebhookReceived;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
@@ -156,7 +156,7 @@ test('accepts valid HMAC-signed request', function () {
     makeInstance(['webhook_secret' => $secret]);
 
     $body = json_encode(['event' => 'unknown']);
-    $sig  = signedRequest($body, $secret);
+    $sig = signedRequest($body, $secret);
 
     $this->call(
         'POST',
@@ -177,7 +177,7 @@ test('accepts webhook verified against global secret when instance is not in dat
     config(['gowa.webhook.secret' => $secret]);
 
     $body = json_encode(['event' => 'message', 'payload' => ['id' => 'GLOB-1', 'chat_id' => '5511999999999@s.whatsapp.net', 'body' => 'Hi']]);
-    $sig  = signedRequest($body, $secret);
+    $sig = signedRequest($body, $secret);
 
     $this->call(
         'POST',
@@ -191,7 +191,6 @@ test('accepts webhook verified against global secret when instance is not in dat
 
     Event::assertDispatched(GowaMessageReceived::class);
 });
-
 
 test('rejects unsigned webhook for the default device when no global secret is set', function () {
     Event::fake();
@@ -220,7 +219,7 @@ test('rejects webhook signed with the wrong secret for the default device', func
     config(['gowa.default_device_id' => 'default-device']);
 
     $body = json_encode(['event' => 'message', 'payload' => ['id' => 'FAKE-2', 'chat_id' => '5511999999999@s.whatsapp.net', 'body' => 'spoofed']]);
-    $sig  = signedRequest($body, 'attacker-secret');
+    $sig = signedRequest($body, 'attacker-secret');
 
     $this->call(
         'POST',

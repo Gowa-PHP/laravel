@@ -175,4 +175,3 @@ test('throws when sending empty GowaMessage', function () {
 
     $msg->send($client, testRoute());
 })->throws(InvalidArgumentException::class, 'No notification content specified');
-

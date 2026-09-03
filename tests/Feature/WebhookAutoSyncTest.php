@@ -9,10 +9,10 @@ use Gowa\Laravel\Facades\Gowa;
 use Gowa\Laravel\Models\GowaConversation;
 use Gowa\Laravel\Models\GowaInstance;
 use Gowa\Laravel\Models\GowaMessage;
+use Gowa\Laravel\Webhook\Events\GowaMessageReceived;
 use Gowa\Sdk\Dto\SentMessage;
 use Gowa\Sdk\GowaClient;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Gowa\Laravel\Webhook\Events\GowaMessageReceived;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Log;
 
@@ -252,7 +252,6 @@ test('record_calls can be disabled via config', function () {
 
     expect(\Gowa\Laravel\Models\GowaWebhookCall::where('device_id', 'dev-no-record')->count())->toBe(0);
 });
-
 
 test('audit call keeps the real device_id, url and headers when the device has no instance row', function () {
     withGlobalSecret();
@@ -497,14 +496,14 @@ test('outbound message via Notification channel auto-creates message in database
 
     $channel = new \Gowa\Laravel\Notifications\GowaChannel($client);
 
-    $notifiable = new class {
+    $notifiable = new class () {
         public function routeNotificationForGowa(): array
         {
             return ['device' => 'dev-notif-sync', 'to' => '5511999998888'];
         }
     };
 
-    $notification = new class extends \Illuminate\Notifications\Notification {
+    $notification = new class () extends \Illuminate\Notifications\Notification {
         public function toGowa(mixed $notifiable): \Gowa\Laravel\Notifications\GowaMessage
         {
             return \Gowa\Laravel\Notifications\GowaMessage::create('Hello from Notification!');
@@ -541,5 +540,3 @@ test('outbound message auto_sync can be disabled via config', function () {
 
     expect(GowaMessage::where('message_id', 'NO.SYNC.999')->count())->toBe(0);
 });
-
-

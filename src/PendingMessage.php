@@ -52,10 +52,10 @@ class PendingMessage
             $this->location !== null => $this->replyTo !== null
                 ? $client->sendLocation($deviceId, $to, $this->location, $this->replyTo)
                 : $client->sendLocation($deviceId, $to, $this->location),
-            $this->sticker !== null => $client->sendSticker($deviceId, $to, $this->sticker, $this->replyTo),
-            $this->media !== null => $client->sendMedia($deviceId, $to, $this->media, $this->replyTo),
+            $this->sticker !== null  => $client->sendSticker($deviceId, $to, $this->sticker, $this->replyTo),
+            $this->media !== null    => $client->sendMedia($deviceId, $to, $this->media, $this->replyTo),
             $this->contacts !== null => $client->sendContacts($deviceId, $to, $this->contacts, $this->replyTo),
-            $this->poll !== null => $client->sendPoll(
+            $this->poll !== null     => $client->sendPoll(
                 $deviceId,
                 $to,
                 $this->poll['question'],
@@ -63,10 +63,10 @@ class PendingMessage
                 $this->poll['maxSelections'],
                 $this->replyTo,
             ),
-            $this->link !== null => $client->sendLink($deviceId, $to, $this->link['url'], $this->link['caption'], $this->replyTo),
+            $this->link !== null     => $client->sendLink($deviceId, $to, $this->link['url'], $this->link['caption'], $this->replyTo),
             $this->reaction !== null => $client->sendReaction($deviceId, $to, $this->reaction['messageId'], $this->reaction['emoji']),
-            $this->text !== null => $client->sendText($deviceId, $to, $this->text, $this->replyTo),
-            default => throw new InvalidArgumentException('No message content specified to send. Call text(), image(), document(), etc.'),
+            $this->text !== null     => $client->sendText($deviceId, $to, $this->text, $this->replyTo),
+            default                  => throw new InvalidArgumentException('No message content specified to send. Call text(), image(), document(), etc.'),
         };
 
         $this->recordOutboundMessage($deviceId, $to, $sentMessage);

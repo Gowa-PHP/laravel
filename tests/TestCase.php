@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Gowa\Laravel\Tests;
 
 use Gowa\Laravel\GowaServiceProvider;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Orchestra\Testbench\TestCase as OrchestraTestCase;
 
 abstract class TestCase extends OrchestraTestCase
@@ -34,17 +33,17 @@ abstract class TestCase extends OrchestraTestCase
         ]);
 
         $app['config']->set('database.connections.mysql', [
-            'driver'         => 'mysql',
-            'host'           => env('DB_HOST', '127.0.0.1'),
-            'port'           => env('DB_PORT', '3336'),
-            'database'       => env('DB_DATABASE', 'gowa_test'),
-            'username'       => env('DB_USERNAME', 'gowa'),
-            'password'       => env('DB_PASSWORD', 'gowa_secret'),
-            'charset'        => 'utf8mb4',
-            'collation'      => 'utf8mb4_unicode_ci',
-            'prefix'         => '',
-            'strict'         => true,
-            'engine'         => null,
+            'driver'    => 'mysql',
+            'host'      => env('DB_HOST', '127.0.0.1'),
+            'port'      => env('DB_PORT', '3336'),
+            'database'  => env('DB_DATABASE', 'gowa_test'),
+            'username'  => env('DB_USERNAME', 'gowa'),
+            'password'  => env('DB_PASSWORD', 'gowa_secret'),
+            'charset'   => 'utf8mb4',
+            'collation' => 'utf8mb4_unicode_ci',
+            'prefix'    => '',
+            'strict'    => true,
+            'engine'    => null,
         ]);
 
         $app['config']->set('database.connections.pgsql', [

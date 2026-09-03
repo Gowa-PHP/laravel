@@ -6,10 +6,10 @@ namespace Gowa\Laravel\Enums;
 
 enum GowaInstanceStatus: string
 {
-    case Created    = 'created';
+    case Created = 'created';
     case Connecting = 'connecting';
-    case Open       = 'open';
-    case Close      = 'close';
+    case Open = 'open';
+    case Close = 'close';
 
     public function isConnected(): bool
     {

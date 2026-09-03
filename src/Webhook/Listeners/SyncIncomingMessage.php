@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Gowa\Laravel\Webhook\Listeners;
 
 use Gowa\Laravel\Enums\GowaMessageDirection;
-use Gowa\Laravel\Models\GowaWebhookCall;
 use Gowa\Laravel\Enums\GowaMessageStatus;
+use Gowa\Laravel\Models\GowaWebhookCall;
 use Gowa\Laravel\Webhook\Events\GowaMessageReceived;
 use Illuminate\Contracts\Queue\ShouldQueue;
 
@@ -74,9 +74,9 @@ class SyncIncomingMessage implements ShouldQueue
         );
 
         $sentAt = match (true) {
-            empty($incoming->timestamp) => now(),
+            empty($incoming->timestamp)      => now(),
             is_numeric($incoming->timestamp) => \Carbon\Carbon::createFromTimestamp((int) $incoming->timestamp),
-            default => \Carbon\Carbon::parse($incoming->timestamp),
+            default                          => \Carbon\Carbon::parse($incoming->timestamp),
         };
 
         $direction = $incoming->isEcho ? GowaMessageDirection::Outbound : GowaMessageDirection::Inbound;

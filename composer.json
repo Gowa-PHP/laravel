@@ -16,6 +16,7 @@
         "illuminate/support": "^10.0|^11.0|^12.0"
     },
     "require-dev": {
+        "friendsofphp/php-cs-fixer": "^3.95",
         "orchestra/testbench": "^8.0|^9.0|^10.0",
         "pestphp/pest": "^3.0"
     },
@@ -52,6 +53,8 @@
         }
     },
     "scripts": {
+        "lint": "vendor/bin/php-cs-fixer fix --dry-run --diff",
+        "lint:fix": "vendor/bin/php-cs-fixer fix",
         "test": "vendor/bin/pest",
         "test:sqlite": "DB_CONNECTION=sqlite vendor/bin/pest",
         "test:mysql": "DB_CONNECTION=mysql vendor/bin/pest",

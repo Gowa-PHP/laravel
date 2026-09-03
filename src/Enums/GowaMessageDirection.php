@@ -6,6 +6,6 @@ namespace Gowa\Laravel\Enums;
 
 enum GowaMessageDirection: string
 {
-    case Inbound  = 'inbound';
+    case Inbound = 'inbound';
     case Outbound = 'outbound';
 }

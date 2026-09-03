@@ -49,7 +49,7 @@ config([
 
 // Configure Database Connection (SQLite in-memory for standalone example scripts)
 config([
-    'database.default' => 'testing',
+    'database.default'             => 'testing',
     'database.connections.testing' => [
         'driver'   => 'sqlite',
         'database' => ':memory:',

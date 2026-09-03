@@ -165,7 +165,7 @@ trait BuildsMessagePayload
     public function link(string $url, ?string $caption = null): static
     {
         $this->link = [
-            'url' => $url,
+            'url'     => $url,
             'caption' => $caption,
         ];
 
@@ -178,8 +178,8 @@ trait BuildsMessagePayload
     public function poll(string $question, array $options, int $maxSelections = 1): static
     {
         $this->poll = [
-            'question' => $question,
-            'options' => array_values($options),
+            'question'      => $question,
+            'options'       => array_values($options),
             'maxSelections' => $maxSelections,
         ];
 
@@ -190,7 +190,7 @@ trait BuildsMessagePayload
     {
         $this->reaction = [
             'messageId' => $messageId,
-            'emoji' => $emoji,
+            'emoji'     => $emoji,
         ];
 
         return $this;
@@ -318,14 +318,14 @@ trait BuildsMessagePayload
             ?? ($this->link ? $this->link['url'] : null);
 
         $type = match (true) {
-            $this->media !== null => $this->media->type->value,
+            $this->media !== null    => $this->media->type->value,
             $this->location !== null => 'location',
-            $this->poll !== null => 'poll',
+            $this->poll !== null     => 'poll',
             $this->contacts !== null => 'contacts',
-            $this->sticker !== null => 'sticker',
-            $this->link !== null => 'link',
+            $this->sticker !== null  => 'sticker',
+            $this->link !== null     => 'link',
             $this->reaction !== null => 'reaction',
-            default => 'text',
+            default                  => 'text',
         };
 
         $mediaUrl = null;

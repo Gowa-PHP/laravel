@@ -15,7 +15,7 @@ class GowaServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        $this->mergeConfigFrom(__DIR__.'/../config/gowa.php', 'gowa');
+        $this->mergeConfigFrom(__DIR__ . '/../config/gowa.php', 'gowa');
 
         $this->app->singleton(GowaClient::class, function () {
             return new GowaClient(new Config(
@@ -35,16 +35,16 @@ class GowaServiceProvider extends ServiceProvider
     {
         if ($this->app->runningInConsole()) {
             $this->publishes([
-                __DIR__.'/../config/gowa.php' => config_path('gowa.php'),
+                __DIR__ . '/../config/gowa.php' => config_path('gowa.php'),
             ], 'gowa-config');
 
             $this->publishes([
-                __DIR__.'/../database/migrations' => database_path('migrations'),
+                __DIR__ . '/../database/migrations' => database_path('migrations'),
             ], 'gowa-migrations');
         }
 
         if (\Gowa\Laravel\Facades\Gowa::$runsMigrations && config('gowa.migrations', true)) {
-            $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
+            $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
         }
 
         $this->registerWebhookRoute();

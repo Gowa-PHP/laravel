@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 use Gowa\Laravel\Models\GowaInstance;
 use Gowa\Sdk\GowaClient;
-use Gowa\Sdk\Security\WebhookSignature;
 use Illuminate\Http\Request;
 
 beforeEach(function () {

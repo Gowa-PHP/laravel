@@ -44,6 +44,6 @@ try {
     echo "✔ Notification sent successfully via GowaChannel!\n";
     exit(0);
 } catch (Throwable $e) {
-    echo "❌ Failed to send notification: " . $e->getMessage() . "\n";
+    echo '❌ Failed to send notification: ' . $e->getMessage() . "\n";
     exit(1);
 }

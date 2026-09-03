@@ -60,8 +60,8 @@ test('PendingMessage falls back to database GowaInstance when deviceId not provi
 
     GowaInstance::create([
         'device_id' => 'db-device-uuid',
-        'name' => 'Support Desk',
-        'status' => GowaInstanceStatus::Open,
+        'name'      => 'Support Desk',
+        'status'    => GowaInstanceStatus::Open,
     ]);
 
     $client = Mockery::mock(GowaClient::class);

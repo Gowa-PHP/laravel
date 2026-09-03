@@ -23,7 +23,7 @@ if ($recipient === '' || $text === '') {
 }
 
 if (getenv('GOWA_SEND_MESSAGE') !== '1') {
-    $confirmation = prompt("This sends a real WhatsApp message. Type SEND to continue: ");
+    $confirmation = prompt('This sends a real WhatsApp message. Type SEND to continue: ');
     if ($confirmation !== 'SEND') {
         fwrite(STDERR, "Message sending cancelled.\n");
         exit(1);

@@ -62,7 +62,7 @@ class GowaChannel
 
         $message->send($this->client, [
             'device' => (string) $route['device'],
-            'to' => (string) $route['to'],
+            'to'     => (string) $route['to'],
         ]);
     }
 }

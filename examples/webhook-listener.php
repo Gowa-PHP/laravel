@@ -12,7 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Event;
 
 $deviceId = 'my-instance-uuid';
-$secret   = 'test-webhook-secret';
+$secret = 'test-webhook-secret';
 
 // 1. Create instance record in DB
 $instance = GowaInstance::create([
@@ -56,7 +56,7 @@ echo "\n3. Dispatching simulated Webhook POST request to route /webhooks/gowa/{$
 $request = Request::create(
     "/webhooks/gowa/{$deviceId}",
     'POST',
-    content: $payload
+    content: $payload,
 );
 $request->headers->set('X-Gowa-Signature', $signature);
 $request->headers->set('Content-Type', 'application/json');

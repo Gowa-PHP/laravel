@@ -5,3 +5,4 @@ composer.lock
 .env
 examples/.env
 /storage/
+.php-cs-fixer.cache

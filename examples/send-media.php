@@ -28,7 +28,7 @@ echo "2. Document via Laravel Storage (disk)\n";
 echo "3. Geolocation & Interactive Poll\n\n";
 
 if (getenv('GOWA_SEND_MESSAGE') !== '1') {
-    $confirmation = prompt("This sends real WhatsApp messages. Type SEND to continue: ");
+    $confirmation = prompt('This sends real WhatsApp messages. Type SEND to continue: ');
     if ($confirmation !== 'SEND') {
         fwrite(STDERR, "Execution cancelled (dry-run mode).\n");
         exit(0);

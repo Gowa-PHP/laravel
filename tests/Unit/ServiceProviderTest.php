@@ -39,4 +39,3 @@ test('Gowa::ignoreMigrations disables migration loading', function () {
     // Reset back for other tests
     \Gowa\Laravel\Facades\Gowa::$runsMigrations = true;
 });
-
