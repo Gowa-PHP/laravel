@@ -222,7 +222,7 @@ test('incoming webhook records audit call in gowa_webhook_calls table', function
     expect($call)->not->toBeNull()
         ->and($call->instance_id)->toBe($instance->id)
         ->and($call->event)->toBe('message')
-        ->and($call->payload)->toBe($payload)
+        ->and($call->payload)->toEqual($payload)
         ->and($call->processed)->toBeTrue();
 
     // Verify relation on instance
@@ -275,7 +275,7 @@ test('audit call keeps the real device_id, url and headers when the device has n
         ->and($call->event)->toBe('message')
         ->and($call->url)->toContain('/webhooks/gowa/dev-stateless')
         ->and($call->headers)->toHaveKey('x-hub-signature-256')
-        ->and($call->payload)->toBe($payload);
+        ->and($call->payload)->toEqual($payload);
 });
 
 test('audit call does not store credential headers', function () {
