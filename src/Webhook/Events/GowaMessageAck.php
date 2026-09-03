@@ -13,8 +13,10 @@ class GowaMessageAck
     use Dispatchable, SerializesModels;
 
     public function __construct(
-        public readonly int $instanceId,
+        public readonly ?int $instanceId,
+        public readonly string $deviceId,
         public readonly IncomingAck $ack,
         public readonly array $raw,
+        public readonly ?int $webhookCallId = null,
     ) {}
 }

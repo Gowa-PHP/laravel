@@ -77,10 +77,22 @@ class GowaInstance extends Model
         return $this->hasMany(config('gowa.models.message'), 'instance_id');
     }
 
+    /** @return HasMany<GowaWebhookCall> */
+    public function webhookCalls(): HasMany
+    {
+        return $this->hasMany(config('gowa.models.webhook_call', GowaWebhookCall::class), 'instance_id');
+    }
+
     public function verifyWebhookSignature(Request $request): bool
     {
-        if (empty($this->webhook_secret)) {
-            return true;
+        // Mirrors the GOWA server's own resolution order: a device-level secret wins,
+        // otherwise the global one is used. The server signs *every* delivery, so a
+        // device without its own secret still arrives signed with the global secret --
+        // an absent secret is a misconfiguration here, never a reason to skip the check.
+        $secret = $this->webhook_secret ?: config('gowa.webhook.secret');
+
+        if (empty($secret)) {
+            return false;
         }
 
         $signatureHeader = (string) (
@@ -94,7 +106,7 @@ class GowaInstance extends Model
         return WebhookSignature::verify(
             $request->getContent(),
             $signatureHeader,
-            $this->webhook_secret,
+            (string) $secret,
         );
     }
 

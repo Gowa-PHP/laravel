@@ -19,11 +19,36 @@ test('client() returns GowaClient', function () {
     expect($instance->client())->toBeInstanceOf(GowaClient::class);
 });
 
-test('verifyWebhookSignature returns true when no secret configured', function () {
+test('verifyWebhookSignature returns false when no secret is configured anywhere', function () {
+    config(['gowa.webhook.secret' => null]);
+
     $instance = new GowaInstance(['webhook_secret' => null]);
     $request = Request::create('/webhook', 'POST', content: '{}');
 
+    expect($instance->verifyWebhookSignature($request))->toBeFalse();
+});
+
+test('verifyWebhookSignature falls back to the global secret when the instance has none', function () {
+    $secret = 'global-hmac-secret';
+    $payload = '{"event":"message"}';
+    config(['gowa.webhook.secret' => $secret]);
+
+    $instance = new GowaInstance(['webhook_secret' => null]);
+    $request = Request::create('/webhook', 'POST', content: $payload);
+    $request->headers->set('X-Hub-Signature-256', 'sha256=' . hash_hmac('sha256', $payload, $secret));
+
     expect($instance->verifyWebhookSignature($request))->toBeTrue();
+});
+
+test('verifyWebhookSignature prefers the instance secret over the global one', function () {
+    $payload = '{"event":"message"}';
+    config(['gowa.webhook.secret' => 'global-hmac-secret']);
+
+    $instance = new GowaInstance(['webhook_secret' => 'device-secret']);
+    $request = Request::create('/webhook', 'POST', content: $payload);
+    $request->headers->set('X-Hub-Signature-256', 'sha256=' . hash_hmac('sha256', $payload, 'global-hmac-secret'));
+
+    expect($instance->verifyWebhookSignature($request))->toBeFalse();
 });
 
 test('verifyWebhookSignature returns true for valid HMAC', function () {

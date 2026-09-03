@@ -17,9 +17,13 @@ class GowaWebhookReceived
     use Dispatchable, SerializesModels;
 
     public function __construct(
-        public readonly int $instanceId,
+        public readonly ?int $instanceId,
+        public readonly string $deviceId,
         public readonly Event $event,
         public readonly mixed $data,
         public readonly array $raw,
+        public readonly ?string $url = null,
+        public readonly array $headers = [],
+        public readonly ?int $webhookCallId = null,
     ) {}
 }
