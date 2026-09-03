@@ -15,7 +15,7 @@ echo "   Device ID: " . $deviceId . "\n\n";
 
 try {
     // Fetch device status using Gowa Facade
-    $deviceInfo = Gowa::getDevice($deviceId);
+    $deviceInfo = Gowa::device($deviceId);
     echo "✔ Device found on GOWA server!\n";
     echo "   Device JID: " . ($deviceInfo->jid ?? 'N/A') . "\n";
     echo "   State: " . ($deviceInfo->state ?? 'unknown') . "\n\n";

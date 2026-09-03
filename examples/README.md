@@ -5,7 +5,8 @@ This directory contains executable standalone examples demonstrating how to inte
 ## Available Examples
 
 - **`check-device.php`**: Verifies connectivity with your GOWA server, fetches device details, and syncs status to the `GowaInstance` Eloquent model.
-- **`send-text.php`**: Prompts for recipient and message text, and sends a WhatsApp message using the `Gowa` Facade (`Gowa::sendText(...)`).
+- **`send-text.php`**: Prompts for recipient and message text, and sends a WhatsApp message using the Fluent Facade (`Gowa::to($to)->text($text)->send()`).
+- **`send-media.php`**: Demonstrates fluent sending of images via URL, documents from **Laravel Storage disks**, and interactive polls.
 - **`notification-channel.php`**: Demonstrates sending notifications using Laravel's Notification System with `GowaChannel` and `GowaMessage`.
 - **`webhook-listener.php`**: Simulates an incoming GOWA Webhook POST request, verifies the HMAC SHA-256 signature, and dispatches Laravel events (`GowaWebhookReceived`, `GowaMessageReceived`, `GowaMessageAck`).
 
@@ -33,7 +34,7 @@ cp examples/.env.example examples/.env
 php examples/check-device.php
 ```
 
-### 2. Send a Text Message via Facade
+### 2. Send a Text Message via Fluent Facade
 
 ```bash
 php examples/send-text.php
@@ -41,13 +42,19 @@ php examples/send-text.php
 
 By default, this script runs interactively and prompts for confirmation (`SEND`). For automated testing, set `GOWA_SEND_MESSAGE=1` in `examples/.env`.
 
-### 3. Laravel Notification Channel Example
+### 3. Send Media & Storage Attachments
+
+```bash
+php examples/send-media.php
+```
+
+### 4. Laravel Notification Channel Example
 
 ```bash
 php examples/notification-channel.php
 ```
 
-### 4. Webhook Handling & Event Dispatcher Example
+### 5. Webhook Handling & Event Dispatcher Example
 
 ```bash
 php examples/webhook-listener.php

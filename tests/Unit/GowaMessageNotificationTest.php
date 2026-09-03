@@ -42,7 +42,10 @@ test('create with text sends via sendText', function () {
         ->with('device-01', '5511999999999', 'Hello!', null)
         ->andReturn(fakeSent());
 
-    $msg->send($client, testRoute());
+    $result = $msg->send($client, testRoute());
+
+    expect($result)->toBeInstanceOf(SentMessage::class)
+        ->and($result->providerMessageId)->toBe('fake-id');
 });
 
 test('fluent text method', function () {
@@ -115,3 +118,61 @@ test('media takes priority over text', function () {
 
     $msg->send($client, testRoute());
 });
+
+test('poll is sent via sendPoll', function () {
+    $msg = GowaMessage::create()->poll('Favorite color?', ['Red', 'Blue'], 1);
+
+    $client = Mockery::mock(GowaClient::class);
+    $client->shouldReceive('sendPoll')
+        ->once()
+        ->with('device-01', '5511999999999', 'Favorite color?', ['Red', 'Blue'], 1, null)
+        ->andReturn(fakeSent());
+
+    $msg->send($client, testRoute());
+});
+
+test('link is sent via sendLink', function () {
+    $msg = GowaMessage::create()->link('https://example.com', 'Example');
+
+    $client = Mockery::mock(GowaClient::class);
+    $client->shouldReceive('sendLink')
+        ->once()
+        ->with('device-01', '5511999999999', 'https://example.com', 'Example', null)
+        ->andReturn(fakeSent());
+
+    $msg->send($client, testRoute());
+});
+
+test('reaction is sent via sendReaction', function () {
+    $msg = GowaMessage::create()->reaction('msg-target-123', '🔥');
+
+    $client = Mockery::mock(GowaClient::class);
+    $client->shouldReceive('sendReaction')
+        ->once()
+        ->with('device-01', '5511999999999', 'msg-target-123', '🔥')
+        ->andReturn(fakeSent());
+
+    $msg->send($client, testRoute());
+});
+
+test('contacts are sent via sendContacts', function () {
+    $msg = GowaMessage::create()->contact('Jane Doe', '5511988887777');
+
+    $client = Mockery::mock(GowaClient::class);
+    $client->shouldReceive('sendContacts')
+        ->once()
+        ->withArgs(function ($dev, $to, array $contacts) {
+            return count($contacts) === 1 && $contacts[0]->name === 'Jane Doe';
+        })
+        ->andReturn(fakeSent());
+
+    $msg->send($client, testRoute());
+});
+
+test('throws when sending empty GowaMessage', function () {
+    $msg = GowaMessage::create();
+    $client = Mockery::mock(GowaClient::class);
+
+    $msg->send($client, testRoute());
+})->throws(InvalidArgumentException::class, 'No notification content specified');
+

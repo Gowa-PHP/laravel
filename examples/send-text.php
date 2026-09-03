@@ -31,7 +31,7 @@ if (getenv('GOWA_SEND_MESSAGE') !== '1') {
 }
 
 try {
-    $response = Gowa::sendText($recipient, $text);
+    $response = Gowa::to($recipient)->text($text)->send();
     echo "\n✔ Message sent successfully!\n";
     echo "   Response Details:\n";
     var_dump($response);
