@@ -64,49 +64,123 @@ GOWA_BASE_URL=https://gowa.yourcompany.com
 GOWA_USERNAME=admin
 GOWA_PASSWORD=secret
 GOWA_TIMEOUT=15
+GOWA_DEFAULT_DEVICE_ID=my-default-device-uuid
 GOWA_WEBHOOK_SECRET=your_hmac_secret
 GOWA_WEBHOOK_PATH=webhooks/gowa
+GOWA_WEBHOOK_AUTO_SYNC=true
+GOWA_LOG_WEBHOOKS=false
 ```
+
+> **`GOWA_WEBHOOK_SECRET` is required to receive webhooks.** The GOWA server signs
+> every delivery with `X-Hub-Signature-256`, using the device's own secret when it has
+> one and its global `WHATSAPP_WEBHOOK_SECRET` otherwise. This package mirrors that
+> order: `gowa_instances.webhook_secret` first, then `gowa.webhook.secret`. With no
+> secret on either side the signature cannot be verified and the request is rejected
+> with `403` -- an unsigned webhook is never accepted.
 
 ## Usage
 
-### Facade
+### Fluent Messaging (Recommended)
+
+Send messages with an expressive fluent interface:
 
 ```php
 use Gowa\Laravel\Facades\Gowa;
 
-// Send a text message
-Gowa::sendText('5511999998888', 'Hello from Laravel!');
+// Send plain text
+Gowa::to('5511999998888')->text('Hello from Laravel!')->send();
 
-// Send media
-use Gowa\Sdk\Dto\MediaPayload;
-use Gowa\Sdk\Dto\MediaType;
-use Gowa\Sdk\Dto\MediaUpload;
+// Specify a sender device (optional; defaults to config or first connected instance)
+Gowa::from('device-id')->to('5511999998888')->text('Hello from specific instance!')->send();
 
-$media = new MediaPayload(
-    type: MediaType::Document,
-    upload: MediaUpload::fromPath('/path/to/invoice.pdf'),
-);
-Gowa::sendMedia('5511999998888', $media, 'Your invoice');
+// Reply / quote a previous message
+Gowa::to($phone)->replyTo($messageId)->text('Replying to your message...')->send();
+```
+
+#### Media & Laravel Storage Attachments
+
+Seamlessly attach media from URLs, local paths, streams, or **Laravel Storage Disks (S3, MinIO, Public, Local)**:
+
+```php
+// Image (from URL or local file path)
+Gowa::to($phone)->image('https://example.com/banner.png', 'Promotional offer!')->send();
+
+// Document directly from Laravel Storage Disk (e.g. Amazon S3) via streaming
+Gowa::to($phone)
+    ->disk('s3')
+    ->document('invoices/2026/inv_1092.pdf', filename: 'Invoice.pdf', caption: 'Your monthly invoice')
+    ->send();
+
+// You can also pass the disk inline
+Gowa::to($phone)->image('banners/promo.jpg', caption: 'Summer sale', disk: 'public')->send();
+
+// Video & Audio
+Gowa::to($phone)->video('videos/demo.mp4', 'Product Demo')->send();
+Gowa::to($phone)->audio('podcasts/episode1.mp3')->send();
+
+// Voice note / PTT (Push-To-Talk audio)
+Gowa::to($phone)->voice('voice_notes/memo.ogg')->send();
+
+// Sticker (WebP)
+Gowa::to($phone)->sticker('stickers/thumbs_up.webp')->send();
+```
+
+#### Rich Messages: Locations, Contacts, Polls, Links & Reactions
+
+```php
+// Geolocation (Latitude & Longitude)
+Gowa::to($phone)->location(-23.55052, -46.633309)->send();
+
+// Contact vCard
+Gowa::to($phone)->contact('Jane Doe', '5511988887777')->send();
+
+// Interactive Poll
+Gowa::to($phone)
+    ->poll('What is the best meeting time?', ['Morning (9am)', 'Afternoon (2pm)', 'Evening (6pm)'], maxSelections: 1)
+    ->send();
+
+// Link with rich preview
+Gowa::to($phone)->link('https://antigravity.google', 'Antigravity AI Platform')->send();
+
+// Emoji Reaction to a message
+Gowa::to($phone)->reaction($messageId, '🔥')->send();
+```
+
+#### Direct Message Actions
+
+```php
+// Mark message as read / played
+Gowa::to($phone)->markRead($messageId, withTyping: false);
+Gowa::to($phone)->markPlayed($audioMessageId);
+
+// Revoke (delete for everyone) or Star
+Gowa::to($phone)->revoke($messageId);
+Gowa::to($phone)->star($messageId);
 ```
 
 ### Notification Channel
 
-Implement `toGowa()` on your notification and `routeNotificationForGowa()` on your notifiable:
+Implement `toGowa()` on your notification and `routeNotificationForGowa()` on your notifiable. `GowaMessage` supports all fluent media and storage methods:
 
 ```php
+use Gowa\Laravel\Notifications\GowaChannel;
 use Gowa\Laravel\Notifications\GowaMessage;
+use Illuminate\Notifications\Notification;
 
-class OrderShipped extends Notification
+class OrderInvoiceNotification extends Notification
 {
+    public function __construct(public Order $order) {}
+
     public function via(mixed $notifiable): array
     {
-        return [\Gowa\Laravel\Notifications\GowaChannel::class];
+        return [GowaChannel::class];
     }
 
     public function toGowa(mixed $notifiable): GowaMessage
     {
-        return GowaMessage::create("Your order #{$this->order->id} has shipped!");
+        return GowaMessage::create()
+            ->disk('s3')
+            ->document("invoices/{$this->order->id}.pdf", filename: 'Invoice.pdf', caption: "Here is your invoice for order #{$this->order->id}!");
     }
 }
 
@@ -117,11 +191,23 @@ public function routeNotificationForGowa(): string
 }
 ```
 
-### Webhook Events
+### Webhook Events & Automatic Database Sync
 
 The package registers a POST route at `{GOWA_WEBHOOK_PATH}/{deviceId}` automatically. It verifies the HMAC signature using the `webhook_secret` stored on the `GowaInstance` model, then dispatches typed Laravel events.
 
-Listen to them in `EventServiceProvider` or using `#[AsListener]`:
+#### Automatic Database Sync (`GOWA_WEBHOOK_AUTO_SYNC=true`)
+
+When enabled (default), the package automatically:
+- Creates / updates `GowaConversation` with the sender details.
+- Inserts incoming messages into `GowaMessage` (with direction `inbound` and status `delivered`).
+- Updates `GowaMessage` delivery and read receipts (`delivered_at`, `read_at`, status `read`) upon receiving ack webhooks.
+- Records outbound messages when using `Gowa::to()->send()`.
+- Listeners implement `ShouldQueue` — processing executes asynchronously on your configured Laravel queue worker or synchronously (`sync`).
+- Every accepted delivery is written to `gowa_webhook_calls` by the controller *before* the events are dispatched, with the request URL and headers (minus `authorization`, `cookie` and `proxy-authorization`). If one of the package's sync listeners throws, that row is flipped to `processed = false` and the exception is stored, so a failure is visible in the table and not only in `failed_jobs`.
+
+#### Custom Event Listeners
+
+You can also listen to typed events in your application:
 
 ```php
 use Gowa\Laravel\Webhook\Events\GowaMessageReceived;
@@ -130,20 +216,35 @@ use Gowa\Laravel\Webhook\Events\GowaWebhookReceived;
 
 // Any incoming webhook (before type-specific events)
 Event::listen(GowaWebhookReceived::class, function (GowaWebhookReceived $event) {
-    Log::info('GOWA webhook', ['event' => $event->event->value, 'instance' => $event->instanceId]);
+    // $event->deviceId is always the device the delivery was addressed to.
+    // $event->instanceId is null when that device has no row in gowa_instances.
+    Log::info('GOWA webhook', [
+        'event'    => $event->event->value,
+        'device'   => $event->deviceId,
+        'instance' => $event->instanceId,
+    ]);
 });
 
 // Incoming message
 Event::listen(GowaMessageReceived::class, function (GowaMessageReceived $event) {
     $message = $event->message; // Gowa\Sdk\Webhook\Dto\IncomingMessage
-    // handle...
+    // process custom logic or trigger AI agent...
 });
 
 // Message read/delivered acknowledgement
 Event::listen(GowaMessageAck::class, function (GowaMessageAck $event) {
     $ack = $event->ack; // Gowa\Sdk\Webhook\Dto\IncomingAck
-    // update message status...
 });
+
+// Tip: If your listener catches an exception and wants to flag the webhook audit row as failed:
+use Gowa\Laravel\Models\GowaWebhookCall;
+
+try {
+    // custom processing...
+} catch (\Throwable $e) {
+    GowaWebhookCall::markFailed($event->webhookCallId, $e);
+    throw $e;
+}
 ```
 
 ### Eloquent Models
@@ -173,6 +274,7 @@ Point the config to your own model classes (useful when adding custom columns or
     'instance'     => App\Models\WhatsappInstance::class,
     'conversation' => App\Models\WhatsappConversation::class,
     'message'      => App\Models\WhatsappMessage::class,
+    'webhook_call' => App\Models\WhatsappWebhookCall::class,
 ],
 ```
 
@@ -186,6 +288,22 @@ GOWA_TEAM_FOREIGN_KEY=team_id
 ```
 
 Publish and re-run migrations after enabling this setting.
+
+## Upgrading to v1.1.0
+
+### Breaking Changes & Migration Steps
+
+1. **`GOWA_WEBHOOK_SECRET` is now mandatory**: All webhook deliveries must be signed via HMAC-SHA256. If a device has no device-specific `webhook_secret`, it falls back to the global `gowa.webhook.secret`. Unsigned webhook requests will receive `403 Forbidden` (or `404` if the device is not registered in the database and no global secret is set).
+2. **Publish the Audit Table Migration**: A new migration (`000004_create_gowa_webhook_calls_table.php`) records all webhook deliveries and failure states. Run:
+   ```bash
+   php artisan vendor:publish --tag=gowa-migrations
+   php artisan migrate
+   ```
+3. **Webhook Event Signatures**: The event constructors (`GowaWebhookReceived`, `GowaMessageReceived`, `GowaMessageAck`, `GowaMessageReaction`) now accept `?int $instanceId` and `string $deviceId`. If your application instantiates these events manually in tests, update calls to provide the `$deviceId`.
+4. **Configuration Update**: Re-publish configuration if updating from v1.0:
+   ```bash
+   php artisan vendor:publish --tag=gowa-config --force
+   ```
 
 ## Running Tests
 
