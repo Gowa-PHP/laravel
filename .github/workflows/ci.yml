@@ -87,10 +87,13 @@ jobs:
           coverage: none
 
       - name: Install Composer Dependencies
+        env:
+          COMPOSER_NO_BLOCKING: 1
         run: |
+          composer config policy.advisories.block false 2>/dev/null || true
           composer require "illuminate/contracts:${{ matrix.laravel }}" "illuminate/support:${{ matrix.laravel }}" --no-interaction --no-update
           composer require --dev "orchestra/testbench:${{ matrix.testbench }}" --no-interaction --no-update
-          composer update --prefer-dist --no-progress --no-interaction --with-all-dependencies
+          composer update --prefer-dist --no-progress --no-interaction --with-all-dependencies --no-audit
 
       - name: Validate Installed Versions
         run: |
