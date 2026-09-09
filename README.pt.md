@@ -8,8 +8,9 @@
   [![Última Versão Estável](https://img.shields.io/packagist/v/gowa-php/laravel.svg?style=flat-square)](https://packagist.org/packages/gowa-php/laravel)
   [![Total de Downloads](https://img.shields.io/packagist/dt/gowa-php/laravel.svg?style=flat-square)](https://packagist.org/packages/gowa-php/laravel)
   [![Licença](https://img.shields.io/badge/licen%C3%A7a-MIT-blue.svg?style=flat-square)](LICENSE)
-  [![Versão do PHP](https://img.shields.io/badge/PHP-%3E%3D%208.2-777BB4.svg?style=flat-square)](https://php.net)
-  [![Laravel](https://img.shields.io/badge/Laravel-10%20|%2011%20|%2012-FF2D20.svg?style=flat-square)](https://laravel.com)
+  [![Versão do PHP](https://img.shields.io/badge/PHP-%3E%3D%208.3-777BB4.svg?style=flat-square)](https://php.net)
+  [![Laravel](https://img.shields.io/badge/Laravel-10%20|%2011%20|%2012%20|%2013-FF2D20.svg?style=flat-square)](https://laravel.com)
+  [![Plumb Score](https://plumbphp.dev/badges/gowa-php/laravel/composite.svg?style=flat-square)](https://plumbphp.dev/gowa-php/laravel)
 
 </div>
 
@@ -31,8 +32,8 @@ Este pacote interage com o ecossistema backend em Go criado pela comunidade open
 
 ## Requisitos
 
-- PHP >= 8.2
-- Laravel 10, 11 ou 12
+- PHP >= 8.3
+- Laravel 10, 11, 12 ou 13
 - [`gowa-php/sdk`](https://packagist.org/packages/gowa-php/sdk) ^1.0
 - Uma instância ativa do servidor API REST **[GOWA (go-whatsapp-web-multidevice)](https://github.com/aldinokemal/go-whatsapp-web-multidevice)** (`GOWA_BASE_URL`)
 
