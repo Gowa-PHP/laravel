@@ -6,3 +6,4 @@ composer.lock
 examples/.env
 /storage/
 .php-cs-fixer.cache
+.serena/

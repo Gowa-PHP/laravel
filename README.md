@@ -9,7 +9,8 @@
   [![Total Downloads](https://img.shields.io/packagist/dt/gowa-php/laravel.svg?style=flat-square)](https://packagist.org/packages/gowa-php/laravel)
   [![License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](LICENSE)
   [![PHP Version](https://img.shields.io/badge/PHP-%3E%3D%208.2-777BB4.svg?style=flat-square)](https://php.net)
-  [![Laravel](https://img.shields.io/badge/Laravel-10%20|%2011%20|%2012-FF2D20.svg?style=flat-square)](https://laravel.com)
+  [![Laravel](https://img.shields.io/badge/Laravel-10%20|%2011%20|%2012%20|%2013-FF2D20.svg?style=flat-square)](https://laravel.com)
+  [![Plumb Score](https://plumbphp.dev/badges/gowa-php/laravel/composite.svg?style=flat-square)](https://plumbphp.dev/gowa-php/laravel)
 
 </div>
 
@@ -32,7 +33,7 @@ This package interacts with the Go backend ecosystem created by the open-source 
 ## Requirements
 
 - PHP >= 8.2
-- Laravel 10, 11, or 12
+- Laravel 10, 11, 12, or 13
 - [`gowa-php/sdk`](https://packagist.org/packages/gowa-php/sdk) ^1.0
 - A running instance of the **[GOWA (go-whatsapp-web-multidevice)](https://github.com/aldinokemal/go-whatsapp-web-multidevice)** REST API server (`GOWA_BASE_URL`)
 
