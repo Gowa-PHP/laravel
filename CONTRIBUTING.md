@@ -9,7 +9,7 @@ Please review and adhere to our [Code of Conduct](CODE_OF_CONDUCT.md) in all pro
 ## Prerequisites & Framework Compatibility
 
 This package is designed for broad compatibility:
-- **PHP**: `>= 8.2` (supporting PHP 8.2, 8.3, and 8.4)
+- **PHP**: `>= 8.3` (supporting PHP 8.3 and 8.4)
 - **Laravel**: `^10.0 | ^11.0 | ^12.0 | ^13.0`
 - **Testing Engine**: Pest PHP 3 with `orchestra/testbench`
 

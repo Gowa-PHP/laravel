@@ -12,7 +12,7 @@ Package configuration is in `config/gowa.php`; publishable database migrations a
 - `composer test` runs the Pest suite (equivalent to `vendor/bin/pest`).
 - `vendor/bin/pest tests/Unit/GowaInstanceTest.php` runs one test file while iterating.
 
-The package targets PHP 8.2+ and Laravel 10–12. Tests run through Orchestra Testbench, so do not require a separate Laravel application.
+The package targets PHP 8.3+ and Laravel 10–13. Tests run through Orchestra Testbench, so do not require a separate Laravel application.
 
 ## Coding Style & Naming Conventions
 
