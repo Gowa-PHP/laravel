@@ -9,6 +9,7 @@ This directory contains executable standalone examples demonstrating how to inte
 - **`send-media.php`**: Demonstrates fluent sending of images via URL, documents from **Laravel Storage disks**, and interactive polls.
 - **`notification-channel.php`**: Demonstrates sending notifications using Laravel's Notification System with `GowaChannel` and `GowaMessage`.
 - **`webhook-listener.php`**: Simulates an incoming GOWA Webhook POST request, verifies the HMAC SHA-256 signature, and dispatches Laravel events (`GowaWebhookReceived`, `GowaMessageReceived`, `GowaMessageAck`).
+- **`driver-only.php`**: Demonstrates pure Driver-Only (stateless) mode without running migrations or using package database tables, delegating storage to the host application.
 
 ## Setup & Configuration
 
@@ -58,4 +59,10 @@ php examples/notification-channel.php
 
 ```bash
 php examples/webhook-listener.php
+```
+
+### 6. Driver-Only (Stateless) Mode Example
+
+```bash
+php examples/driver-only.php
 ```

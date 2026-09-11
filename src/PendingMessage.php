@@ -129,14 +129,16 @@ class PendingMessage
             return (string) $configuredDefault;
         }
 
-        $instanceModel = config('gowa.models.instance', \Gowa\Laravel\Models\GowaInstance::class);
-        if (class_exists($instanceModel)) {
-            $instance = $instanceModel::query()
-                ->where('status', GowaInstanceStatus::Open->value)
-                ->first() ?? $instanceModel::query()->first();
+        if (! (config('gowa.stateless', false) || config('gowa.driver_only', false))) {
+            $instanceModel = config('gowa.models.instance', \Gowa\Laravel\Models\GowaInstance::class);
+            if ($instanceModel && class_exists($instanceModel)) {
+                $instance = $instanceModel::query()
+                    ->where('status', GowaInstanceStatus::Open->value)
+                    ->first() ?? $instanceModel::query()->first();
 
-            if ($instance?->device_id) {
-                return (string) $instance->device_id;
+                if ($instance?->device_id) {
+                    return (string) $instance->device_id;
+                }
             }
         }
 

@@ -43,12 +43,23 @@ class GowaServiceProvider extends ServiceProvider
             ], 'gowa-migrations');
         }
 
-        if (\Gowa\Laravel\Facades\Gowa::$runsMigrations && config('gowa.migrations', true)) {
+        $isStateless = (bool) (config('gowa.stateless', false) || config('gowa.driver_only', false));
+
+        if (
+            ! $isStateless
+            && \Gowa\Laravel\Facades\Gowa::$runsMigrations
+            && config('gowa.migrations', true)
+        ) {
             $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
         }
 
         $this->registerWebhookRoute();
-        $this->registerWebhookListeners();
+
+        if ($isStateless) {
+            $this->registerStatelessWebhookListeners();
+        } else {
+            $this->registerWebhookListeners();
+        }
     }
 
     private function registerWebhookRoute(): void
@@ -75,6 +86,14 @@ class GowaServiceProvider extends ServiceProvider
             \Gowa\Laravel\Webhook\Listeners\SyncMessageAck::class,
         );
 
+        \Illuminate\Support\Facades\Event::listen(
+            \Gowa\Laravel\Webhook\Events\GowaWebhookReceived::class,
+            \Gowa\Laravel\Webhook\Listeners\LogWebhookRequest::class,
+        );
+    }
+
+    private function registerStatelessWebhookListeners(): void
+    {
         \Illuminate\Support\Facades\Event::listen(
             \Gowa\Laravel\Webhook\Events\GowaWebhookReceived::class,
             \Gowa\Laravel\Webhook\Listeners\LogWebhookRequest::class,
