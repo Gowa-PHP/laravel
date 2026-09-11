@@ -278,15 +278,79 @@ test('audit call keeps the real device_id, url and headers when the device has n
 });
 
 test('audit call does not store credential headers', function () {
-    withGlobalSecret();
+    $secret = withGlobalSecret();
 
-    $call = null;
-    postWebhook('dev-headers', ['event' => 'unknown'])->assertOk();
+    $body = (string) json_encode(['event' => 'unknown']);
+    $this->call(
+        'POST',
+        '/webhooks/gowa/dev-headers',
+        [],
+        [],
+        [],
+        [
+            'HTTP_X_HUB_SIGNATURE_256' => signWebhook($body, $secret),
+            'HTTP_AUTHORIZATION'       => 'Bearer secret-token',
+            'HTTP_X_GOWA_SECRET'       => 'confidential-secret',
+            'HTTP_X_API_KEY'           => 'my-secret-key',
+            'HTTP_COOKIE'              => 'session=abc',
+            'HTTP_PROXY_AUTHORIZATION' => 'Basic secret-proxy',
+            'HTTP_X_CUSTOM_HEADER'     => 'allowed-header-value',
+            'CONTENT_TYPE'             => 'application/json',
+        ],
+        $body,
+    )->assertOk();
 
     $call = \Gowa\Laravel\Models\GowaWebhookCall::where('device_id', 'dev-headers')->first();
 
-    expect($call->headers)->not->toHaveKey('authorization')
-        ->and($call->headers)->not->toHaveKey('cookie');
+    expect($call)->not->toBeNull()
+        ->and($call->headers)->toHaveKey('x-custom-header')
+        ->and($call->headers)->not->toHaveKey('authorization')
+        ->and($call->headers)->not->toHaveKey('cookie')
+        ->and($call->headers)->not->toHaveKey('proxy-authorization')
+        ->and($call->headers)->not->toHaveKey('x-gowa-secret')
+        ->and($call->headers)->not->toHaveKey('x-api-key');
+});
+
+class FailingWebhookCallModel extends \Gowa\Laravel\Models\GowaWebhookCall
+{
+    public static function create(array $attributes = [])
+    {
+        throw new \RuntimeException('Database connection lost during audit recording');
+    }
+}
+
+test('audit creation failure is rethrown and prevents event dispatch', function () {
+    Event::fake();
+    withGlobalSecret();
+    config(['gowa.models.webhook_call' => FailingWebhookCallModel::class]);
+
+    $body = (string) json_encode(['event' => 'message', 'payload' => ['id' => 'W1', 'chat_id' => '123@s.whatsapp.net', 'body' => 'hi']]);
+    $secret = config('gowa.webhook.secret');
+
+    $caughtException = null;
+
+    try {
+        $this->withoutExceptionHandling()->call(
+            'POST',
+            '/webhooks/gowa/dev-fail',
+            [],
+            [],
+            [],
+            [
+                'HTTP_X_HUB_SIGNATURE_256' => signWebhook($body, $secret),
+                'CONTENT_TYPE'             => 'application/json',
+            ],
+            $body,
+        );
+    } catch (\RuntimeException $e) {
+        $caughtException = $e;
+    }
+
+    expect($caughtException)->not->toBeNull()
+        ->and($caughtException->getMessage())->toBe('Database connection lost during audit recording');
+
+    Event::assertNotDispatched(GowaWebhookReceived::class);
+    Event::assertNotDispatched(GowaMessageReceived::class);
 });
 
 test('stateless webhook dispatches events with a null instanceId and the real deviceId', function () {

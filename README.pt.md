@@ -34,7 +34,7 @@ Este pacote interage com o ecossistema backend em Go criado pela comunidade open
 
 - PHP >= 8.3
 - Laravel 10, 11, 12 ou 13
-- [`gowa-php/sdk`](https://packagist.org/packages/gowa-php/sdk) ^1.0
+- [`gowa-php/sdk`](https://packagist.org/packages/gowa-php/sdk) ^1.5
 - Uma instância ativa do servidor API REST **[GOWA (go-whatsapp-web-multidevice)](https://github.com/aldinokemal/go-whatsapp-web-multidevice)** (`GOWA_BASE_URL`)
 
 ## Instalação
@@ -51,7 +51,7 @@ Publique o arquivo de configuração:
 php artisan vendor:publish --tag=gowa-config
 ```
 
-Publique e execute as migrações (migrations):
+Publique e execute as migrações (migrations) — opcional caso utilize o modo Driver-Only:
 
 ```bash
 php artisan vendor:publish --tag=gowa-migrations
@@ -65,10 +65,13 @@ GOWA_BASE_URL=https://gowa.suaempresa.com
 GOWA_USERNAME=admin
 GOWA_PASSWORD=secret
 GOWA_TIMEOUT=15
+GOWA_STATELESS=false
 GOWA_DEFAULT_DEVICE_ID=meu-dispositivo-padrao-uuid
 GOWA_WEBHOOK_SECRET=sua_chave_hmac_secret
 GOWA_WEBHOOK_PATH=webhooks/gowa
-GOWA_WEBHOOK_AUTO_SYNC=true
+GOWA_AUTO_SYNC_INBOUND=true
+GOWA_AUTO_SYNC_OUTBOUND=true
+GOWA_WEBHOOK_RECORD_CALLS=true
 GOWA_LOG_WEBHOOKS=false
 ```
 
@@ -247,6 +250,110 @@ try {
     throw $e;
 }
 ```
+
+### Modo Stateless (Driver-Only / Sem Migrations)
+
+Se a sua aplicação já possui uma estrutura própria de banco de dados ou se você deseja utilizar este pacote estritamente como cliente da API do WhatsApp e despachante de eventos de webhook sem criar tabelas do pacote, ative o modo Stateless:
+
+```env
+GOWA_STATELESS=true
+GOWA_DEFAULT_DEVICE_ID=seu-dispositivo-padrao-uuid
+GOWA_WEBHOOK_SECRET=sua_chave_hmac_secret
+```
+
+Quando `GOWA_STATELESS=true` está ativo:
+- **Nenhuma migration é carregada**: O pacote não registra e nem executa suas migrations (`gowa_instances`, `gowa_conversations`, `gowa_messages`, `gowa_webhook_calls`).
+- **Sem queries em tabelas do pacote**: O envio fluente (`Gowa::to()`) e notificações (`GowaChannel`) operam puramente via HTTP sem consultar ou persistir em tabelas do pacote.
+- **Webhooks Stateless**: As requisições de webhook são autenticadas diretamente usando o seu secret global `GOWA_WEBHOOK_SECRET`.
+- **Persistência Customizada via Eventos**: O pacote despacha eventos padrão do Laravel (`GowaMessageReceived`, `GowaMessageAck`, `GowaWebhookReceived`), permitindo que você processe e salve os dados diretamente nas models da sua própria aplicação.
+
+#### Tratamento de Mídias, Áudios, Documentos e Localização
+
+Quando um contato envia imagem, vídeo, áudio, mensagem de voz, documento ou localização, o evento `GowaMessageReceived` fornece métodos auxiliares convenientes:
+
+```php
+use App\Models\ChatMessage;
+use Gowa\Laravel\Facades\Gowa;
+use Gowa\Laravel\Webhook\Events\GowaMessageReceived;
+use Gowa\Sdk\Dto\EventPayload;
+use Gowa\Sdk\Dto\LiveLocationPayload;
+use Gowa\Sdk\Dto\OrderPayload;
+use Gowa\Sdk\Dto\PollPayload;
+use Gowa\Sdk\Webhook\Dto\IncomingMessage;
+use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Log;
+
+Event::listen(GowaMessageReceived::class, function (GowaMessageReceived $event) {
+    // Dados básicos da mensagem
+    $type = $event->message->type;       // 'text', 'image', 'video', 'audio', 'document', 'location'
+    $body = $event->message->body;       // Texto da mensagem ou legenda (caption) da mídia
+    $sender = $event->message->phone;    // Telefone do remetente
+    $senderName = $event->message->senderName;
+
+    // Tratamento de Mídias (Imagens, Vídeos, Áudios, Documentos, Figurinhas)
+    if ($event->isMedia()) {
+        $mediaUrl  = $event->mediaUrl();       // URL de download no servidor GOWA
+        $mediaMime = $event->mediaMime();      // ex: 'application/pdf', 'image/jpeg'
+        $filename  = $event->mediaFilename();  // Nome original do arquivo (para documentos)
+        $isVoice   = $event->isVoiceNote();    // true se for áudio gravado no WhatsApp (PTT)
+
+        // Baixar a mídia diretamente para o Storage da sua aplicação
+        if ($mediaUrl) {
+            $extension   = pathinfo($filename ?? '', PATHINFO_EXTENSION);
+            $safeExt     = preg_match('/^[a-zA-Z0-9]{1,10}$/', $extension) ? ".{$extension}" : '';
+            $destination = storage_path("app/whatsapp/{$event->message->id}{$safeExt}");
+            Gowa::downloadMedia($mediaUrl, $destination);
+        }
+    }
+
+    // Tratamento de Localização (GPS Estático ou Tempo Real / Live Location)
+    if ($event->isLocation()) {
+        $dto = $event->locationCoordinates(); // Gowa\Sdk\Dto\LocationPayload ($dto->latitude, $dto->longitude)
+
+        if ($event->isLiveLocation()) {
+            $live = $event->liveLocation(); // Gowa\Sdk\Dto\LiveLocationPayload ($live->speedInMps, $live->accuracyInMeters)
+        }
+    }
+
+    // Enquetes, Eventos e Pedidos estruturados (DTOs tipados do SDK v1.5.0)
+    if ($event->isPoll()) {
+        $poll = $event->poll(); // Gowa\Sdk\Dto\PollPayload ($poll->question, $poll->options)
+    }
+
+    if ($event->isEvent()) {
+        $calEvent = $event->eventData(); // Gowa\Sdk\Dto\EventPayload ($calEvent->name, $calEvent->startTime)
+    }
+
+    if ($event->isOrder()) {
+        $order = $event->order(); // Gowa\Sdk\Dto\OrderPayload ($order->orderTitle, $order->itemCount)
+    }
+
+    // Roteamento Fluente Direto na Mensagem (SDK v1.5.0):
+    $event->message
+        ->whenText(fn(string $text) => ChatMessage::create(['body' => $text]))
+        ->whenLiveLocation(fn(LiveLocationPayload $loc) => Delivery::updatePosition($loc->latitude, $loc->longitude))
+        ->whenPoll(fn(PollPayload $poll) => Log::info("Enquete: {$poll->question}"))
+        ->whenEvent(fn(EventPayload $ev) => Log::info("Evento: {$ev->name}"))
+        ->whenOrder(fn(OrderPayload $ord) => Log::info("Pedido: {$ord->orderTitle}"))
+        ->otherwise(fn(IncomingMessage $msg) => Log::info("Outro tipo recebido: {$msg->type}"));
+
+    // Salvar diretamente na Model da sua própria aplicação:
+    ChatMessage::create([
+        'device_id'   => $event->deviceId,
+        'message_id'  => $event->message->id,
+        'sender'      => $sender,
+        'sender_name' => $senderName,
+        'type'        => $type,
+        'body'        => $body,
+        'media_url'   => $event->mediaUrl(),
+        'media_mime'  => $event->mediaMime(),
+        'latitude'    => $event->locationCoordinates()?->latitude,
+        'longitude'   => $event->locationCoordinates()?->longitude,
+    ]);
+});
+```
+
+Você também pode checar programaticamente se o modo stateless está ativo através de `Gowa::isStateless()`.
 
 ### Models Eloquent
 

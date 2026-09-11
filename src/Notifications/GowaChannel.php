@@ -48,9 +48,16 @@ class GowaChannel
         }
 
         if (empty($route['device'])) {
-            $instanceModel = config('gowa.models.instance', \Gowa\Laravel\Models\GowaInstance::class);
-            $defaultInstance = $instanceModel::query()->first();
-            $route['device'] = config('gowa.default_device_id') ?: ($defaultInstance?->device_id ?? '');
+            $configuredDefault = config('gowa.default_device_id');
+            if (! empty($configuredDefault)) {
+                $route['device'] = (string) $configuredDefault;
+            } elseif (! (config('gowa.stateless', false) || config('gowa.driver_only', false))) {
+                $instanceModel = config('gowa.models.instance', \Gowa\Laravel\Models\GowaInstance::class);
+                if ($instanceModel && class_exists($instanceModel)) {
+                    $defaultInstance = $instanceModel::query()->first();
+                    $route['device'] = $defaultInstance?->device_id ?? '';
+                }
+            }
         }
 
         if (empty($route['device'])) {

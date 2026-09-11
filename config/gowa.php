@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+$isStateless = (bool) (env('GOWA_STATELESS', false) || env('GOWA_DRIVER_ONLY', false));
+
 return [
 
     /*
@@ -39,14 +41,31 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Stateless Mode
+    |--------------------------------------------------------------------------
+    |
+    | When enabled, GOWA operates purely as an API client and event dispatcher:
+    | - No package migrations are loaded.
+    | - No package database queries or Eloquent models are executed.
+    | - Auto-sync to package tables is disabled.
+    | - Webhooks are validated via the global HMAC secret and dispatched
+    |   as standard Laravel events for your application models to handle.
+    |
+    */
+    'stateless'   => $isStateless,
+    'driver_only' => $isStateless,
+
+    /*
+    |--------------------------------------------------------------------------
     | Package Migrations
     |--------------------------------------------------------------------------
     |
     | Set to false if you are using custom tables and do not want the package
     | default migrations to be automatically registered.
+    | Automatically disabled when `stateless` is true.
     |
     */
-    'migrations' => (bool) env('GOWA_MIGRATIONS', true),
+    'migrations' => (bool) env('GOWA_MIGRATIONS', ! $isStateless),
 
     /*
     |--------------------------------------------------------------------------
@@ -68,11 +87,12 @@ return [
     | Automatically persist conversations and messages in the database.
     | `inbound`: record incoming messages and acks from webhooks.
     | `outbound`: record messages sent via Gowa Facade or Notification channel.
+    | Automatically disabled when `stateless` is true.
     |
     */
     'auto_sync' => [
-        'inbound'  => (bool) env('GOWA_AUTO_SYNC_INBOUND', env('GOWA_WEBHOOK_AUTO_SYNC', true)),
-        'outbound' => (bool) env('GOWA_AUTO_SYNC_OUTBOUND', true),
+        'inbound'  => (bool) env('GOWA_AUTO_SYNC_INBOUND', env('GOWA_WEBHOOK_AUTO_SYNC', ! $isStateless)),
+        'outbound' => (bool) env('GOWA_AUTO_SYNC_OUTBOUND', ! $isStateless),
     ],
 
     /*
@@ -91,8 +111,8 @@ return [
     'webhook' => [
         'secret'           => env('GOWA_WEBHOOK_SECRET'),
         'path'             => env('GOWA_WEBHOOK_PATH', 'webhooks/gowa'),
-        'auto_sync'        => (bool) env('GOWA_WEBHOOK_AUTO_SYNC', true),
-        'record_calls'     => (bool) env('GOWA_WEBHOOK_RECORD_CALLS', true),
+        'auto_sync'        => (bool) env('GOWA_WEBHOOK_AUTO_SYNC', ! $isStateless),
+        'record_calls'     => (bool) env('GOWA_WEBHOOK_RECORD_CALLS', ! $isStateless),
         'log_requests'     => (bool) env('GOWA_LOG_WEBHOOKS', false),
         'log_channel'      => env('GOWA_LOG_CHANNEL'),
         'prune_after_days' => (int) env('GOWA_WEBHOOK_PRUNE_DAYS', 30),

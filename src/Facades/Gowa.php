@@ -51,6 +51,16 @@ class Gowa extends Facade
         static::$runsMigrations = false;
     }
 
+    public static function isStateless(): bool
+    {
+        return (bool) (config('gowa.stateless', false) || config('gowa.driver_only', false));
+    }
+
+    public static function isDriverOnly(): bool
+    {
+        return static::isStateless();
+    }
+
     protected static function getFacadeAccessor(): string
     {
         return GowaClient::class;

@@ -270,7 +270,7 @@ trait BuildsMessagePayload
 
     public function recordOutboundMessage(string $deviceId, string $to, SentMessage $sentMessage): void
     {
-        if (! config('gowa.auto_sync.outbound', true)) {
+        if ((config('gowa.stateless', false) || config('gowa.driver_only', false)) || ! config('gowa.auto_sync.outbound', true)) {
             return;
         }
 
@@ -282,86 +282,90 @@ trait BuildsMessagePayload
             return;
         }
 
-        /** @var \Gowa\Laravel\Models\GowaInstance|null $instance */
-        $instance = $instanceModel::where('device_id', $deviceId)->first();
-        if ($instance === null) {
-            return;
-        }
-
-        $chatId = str_contains($to, '@') ? $to : $to . '@s.whatsapp.net';
-        $phone = explode('@', $chatId)[0];
-
-        $conversationValues = [
-            'contact_phone'   => $phone,
-            'last_message_at' => now(),
-        ];
-
-        if (config('gowa.teams.enabled', false)) {
-            $teamFk = config('gowa.teams.foreign_key', 'team_id');
-            if (isset($instance->{$teamFk})) {
-                $conversationValues[$teamFk] = $instance->{$teamFk};
+        try {
+            /** @var \Gowa\Laravel\Models\GowaInstance|null $instance */
+            $instance = $instanceModel::where('device_id', $deviceId)->first();
+            if ($instance === null) {
+                return;
             }
-        }
 
-        /** @var \Gowa\Laravel\Models\GowaConversation $conversation */
-        $conversation = $conversationModel::updateOrCreate(
-            [
-                'instance_id' => $instance->id,
-                'contact_jid' => $chatId,
-            ],
-            $conversationValues,
-        );
+            $chatId = str_contains($to, '@') ? $to : $to . '@s.whatsapp.net';
+            $phone = explode('@', $chatId)[0];
 
-        $body = $this->text
-            ?? $this->media?->caption
-            ?? ($this->poll ? $this->poll['question'] : null)
-            ?? ($this->link ? $this->link['url'] : null);
+            $conversationValues = [
+                'contact_phone'   => $phone,
+                'last_message_at' => now(),
+            ];
 
-        $type = match (true) {
-            $this->media !== null    => $this->media->type->value,
-            $this->location !== null => 'location',
-            $this->poll !== null     => 'poll',
-            $this->contacts !== null => 'contacts',
-            $this->sticker !== null  => 'sticker',
-            $this->link !== null     => 'link',
-            $this->reaction !== null => 'reaction',
-            default                  => 'text',
-        };
-
-        $mediaUrl = null;
-        $mediaMime = null;
-        if ($this->media !== null) {
-            $mediaMime = $this->media->upload?->mimeType;
-            if (is_string($this->media->upload?->source) && filter_var($this->media->upload->source, FILTER_VALIDATE_URL)) {
-                $mediaUrl = $this->media->upload->source;
+            if (config('gowa.teams.enabled', false)) {
+                $teamFk = config('gowa.teams.foreign_key', 'team_id');
+                if (isset($instance->{$teamFk})) {
+                    $conversationValues[$teamFk] = $instance->{$teamFk};
+                }
             }
-        }
 
-        $messageValues = [
-            'conversation_id' => $conversation->id,
-            'direction'       => GowaMessageDirection::Outbound,
-            'status'          => GowaMessageStatus::Sent,
-            'type'            => $type,
-            'body'            => $body,
-            'media_url'       => $mediaUrl,
-            'media_mime'      => $mediaMime,
-            'reply_to'        => $this->replyTo,
-            'sent_at'         => now(),
-        ];
+            /** @var \Gowa\Laravel\Models\GowaConversation $conversation */
+            $conversation = $conversationModel::updateOrCreate(
+                [
+                    'instance_id' => $instance->id,
+                    'contact_jid' => $chatId,
+                ],
+                $conversationValues,
+            );
 
-        if (config('gowa.teams.enabled', false)) {
-            $teamFk = config('gowa.teams.foreign_key', 'team_id');
-            if (isset($instance->{$teamFk})) {
-                $messageValues[$teamFk] = $instance->{$teamFk};
+            $body = $this->text
+                ?? $this->media?->caption
+                ?? ($this->poll ? $this->poll['question'] : null)
+                ?? ($this->link ? $this->link['url'] : null);
+
+            $type = match (true) {
+                $this->media !== null    => $this->media->type->value,
+                $this->location !== null => 'location',
+                $this->poll !== null     => 'poll',
+                $this->contacts !== null => 'contacts',
+                $this->sticker !== null  => 'sticker',
+                $this->link !== null     => 'link',
+                $this->reaction !== null => 'reaction',
+                default                  => 'text',
+            };
+
+            $mediaUrl = null;
+            $mediaMime = null;
+            if ($this->media !== null) {
+                $mediaMime = $this->media->upload?->mimeType;
+                if (is_string($this->media->upload?->source) && filter_var($this->media->upload->source, FILTER_VALIDATE_URL)) {
+                    $mediaUrl = $this->media->upload->source;
+                }
             }
-        }
 
-        $messageModel::updateOrCreate(
-            [
-                'instance_id' => $instance->id,
-                'message_id'  => $sentMessage->providerMessageId,
-            ],
-            $messageValues,
-        );
+            $messageValues = [
+                'conversation_id' => $conversation->id,
+                'direction'       => GowaMessageDirection::Outbound,
+                'status'          => GowaMessageStatus::Sent,
+                'type'            => $type,
+                'body'            => $body,
+                'media_url'       => $mediaUrl,
+                'media_mime'      => $mediaMime,
+                'reply_to'        => $this->replyTo,
+                'sent_at'         => now(),
+            ];
+
+            if (config('gowa.teams.enabled', false)) {
+                $teamFk = config('gowa.teams.foreign_key', 'team_id');
+                if (isset($instance->{$teamFk})) {
+                    $messageValues[$teamFk] = $instance->{$teamFk};
+                }
+            }
+
+            $messageModel::updateOrCreate(
+                [
+                    'instance_id' => $instance->id,
+                    'message_id'  => $sentMessage->providerMessageId,
+                ],
+                $messageValues,
+            );
+        } catch (\Throwable $e) {
+            report($e);
+        }
     }
 }
