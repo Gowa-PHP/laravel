@@ -128,10 +128,10 @@ In addition to CodeRabbit findings and automated test results, audit the diff ag
 ### Axis 3: Security & Webhook Authentication
 - **HMAC Signatures:** Are webhooks validated with `verifyWebhookSignature` using constant-time string comparison (`hash_equals`)?
 - **Secret Isolation:** Does the instance secret take precedence over global secret? Is global secret used in stateless mode?
-- **Audit Sanitization:** Are sensitive headers (`Authorization`, `X-Gowa-Secret`) redacted from `gowa_webhook_calls`?
+- **Audit Sanitization:** Are sensitive headers (`Authorization`, `X-Gowa-Secret`, `X-Api-Key`) redacted from `gowa_webhook_calls`?
 
 ### Axis 4: SDK Alignment & Event Ergonomics
-- **SDK v1.5.0 DTOs:** Are `LocationPayload`, `LiveLocationPayload`, `PollPayload`, `EventPayload`, `OrderPayload`, and `ContactCard` utilized cleanly?
+- **SDK ^1.5 DTOs:** Are `LocationPayload`, `LiveLocationPayload`, `PollPayload`, `EventPayload`, `OrderPayload`, and `ContactCard` utilized cleanly?
 - **Coordinate Flexibility:** Are `degreesLatitude`/`degreesLongitude` and `latitude`/`longitude` resolved transparently?
 - **WebhookEvent Support:** Does the webhook controller accept both `array` and `WebhookEvent` instances?
 

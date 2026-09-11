@@ -32,6 +32,16 @@ test('Gowa::isStateless and Gowa::isDriverOnly reflect configuration', function 
     config(['gowa.stateless' => false, 'gowa.driver_only' => false]);
     expect(Gowa::isStateless())->toBeFalse()
         ->and(Gowa::isDriverOnly())->toBeFalse();
+
+    // Only driver_only is true
+    config(['gowa.stateless' => false, 'gowa.driver_only' => true]);
+    expect(Gowa::isStateless())->toBeTrue()
+        ->and(Gowa::isDriverOnly())->toBeTrue();
+
+    // Only stateless is true
+    config(['gowa.stateless' => true, 'gowa.driver_only' => false]);
+    expect(Gowa::isStateless())->toBeTrue()
+        ->and(Gowa::isDriverOnly())->toBeTrue();
 });
 
 test('Gowa::to sends message without touching database in stateless mode', function () {

@@ -34,7 +34,7 @@ This package interacts with the Go backend ecosystem created by the open-source 
 
 - PHP >= 8.3
 - Laravel 10, 11, 12, or 13
-- [`gowa-php/sdk`](https://packagist.org/packages/gowa-php/sdk) ^1.0
+- [`gowa-php/sdk`](https://packagist.org/packages/gowa-php/sdk) ^1.5
 - A running instance of the **[GOWA (go-whatsapp-web-multidevice)](https://github.com/aldinokemal/go-whatsapp-web-multidevice)** REST API server (`GOWA_BASE_URL`)
 
 ## Installation
@@ -272,10 +272,16 @@ When `GOWA_STATELESS=true` is enabled:
 When a user sends an image, video, voice note, document, or location, `GowaMessageReceived` provides convenient helper methods:
 
 ```php
-use Gowa\Laravel\Webhook\Events\GowaMessageReceived;
-use Gowa\Laravel\Facades\Gowa;
-use Illuminate\Support\Facades\Event;
 use App\Models\ChatMessage;
+use Gowa\Laravel\Facades\Gowa;
+use Gowa\Laravel\Webhook\Events\GowaMessageReceived;
+use Gowa\Sdk\Dto\EventPayload;
+use Gowa\Sdk\Dto\LiveLocationPayload;
+use Gowa\Sdk\Dto\OrderPayload;
+use Gowa\Sdk\Dto\PollPayload;
+use Gowa\Sdk\Webhook\Dto\IncomingMessage;
+use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Log;
 
 Event::listen(GowaMessageReceived::class, function (GowaMessageReceived $event) {
     // Basic message information
@@ -293,7 +299,9 @@ Event::listen(GowaMessageReceived::class, function (GowaMessageReceived $event) 
 
         // Optionally download the file directly to your application's Storage
         if ($mediaUrl) {
-            $destination = storage_path("app/whatsapp/{$event->message->id}_" . ($filename ?? 'media'));
+            $extension   = pathinfo($filename ?? '', PATHINFO_EXTENSION);
+            $safeExt     = preg_match('/^[a-zA-Z0-9]{1,10}$/', $extension) ? ".{$extension}" : '';
+            $destination = storage_path("app/whatsapp/{$event->message->id}{$safeExt}");
             Gowa::downloadMedia($mediaUrl, $destination);
         }
     }

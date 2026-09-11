@@ -53,7 +53,7 @@ Every review comment must be classified into one of the following 4 levels:
 - [ ] **Explicit Exceptions**: If a device ID is required and neither provided nor set in configuration, throw a clear `InvalidArgumentException` before attempting network or database operations.
 
 ### 🧩 SDK Compatibility & Event Ergonomics
-- [ ] **`gowa-php/sdk` v1.5.0 Alignment**: Utilize typed DTOs (`LocationPayload`, `LiveLocationPayload`, `PollPayload`, `EventPayload`, `OrderPayload`, `ContactCard`) and `MessageType` enums.
+- [ ] **`gowa-php/sdk` ^1.5 Alignment**: Utilize typed DTOs (`LocationPayload`, `LiveLocationPayload`, `PollPayload`, `EventPayload`, `OrderPayload`, `ContactCard`) and `MessageType` enums.
 - [ ] **Webhook Event Objects**: Accept both `array` and `WebhookEvent` instances in controller and event handlers.
 - [ ] **Resilient Coordinates**: Support both protobuf keys (`degreesLatitude`, `degreesLongitude`) and normalized keys (`latitude`, `longitude`).
 
@@ -74,7 +74,7 @@ Every review comment must be classified into one of the following 4 levels:
 
 When reporting review findings, adhere to the following template:
 
-```markdown
+````markdown
 ### [SEVERITY] `path/to/File.php:Line` — Descriptive Title
 
 **Problem:**
@@ -89,4 +89,4 @@ Clear explanation of the bug, database leakage, vulnerability, or compatibility 
 ```php
 // corrected code, ready to apply
 ```
-```
+````

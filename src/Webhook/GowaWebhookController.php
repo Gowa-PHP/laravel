@@ -139,15 +139,9 @@ final class GowaWebhookController extends Controller
             }
         }
 
-        try {
-            $call = $webhookCallModel::create($data);
+        $call = $webhookCallModel::create($data);
 
-            return (int) $call->id;
-        } catch (\Throwable $e) {
-            report($e);
-
-            return null;
-        }
+        return (int) $call->id;
     }
 
     /**
@@ -159,7 +153,7 @@ final class GowaWebhookController extends Controller
     {
         return array_diff_key(
             $request->headers->all(),
-            array_flip(['authorization', 'cookie', 'proxy-authorization']),
+            array_flip(['authorization', 'cookie', 'proxy-authorization', 'x-gowa-secret', 'x-api-key']),
         );
     }
 }

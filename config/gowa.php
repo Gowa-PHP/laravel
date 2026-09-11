@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+$isStateless = (bool) (env('GOWA_STATELESS', false) || env('GOWA_DRIVER_ONLY', false));
+
 return [
 
     /*
@@ -50,8 +52,8 @@ return [
     |   as standard Laravel events for your application models to handle.
     |
     */
-    'stateless'   => (bool) env('GOWA_STATELESS', env('GOWA_DRIVER_ONLY', false)),
-    'driver_only' => (bool) env('GOWA_STATELESS', env('GOWA_DRIVER_ONLY', false)),
+    'stateless'   => $isStateless,
+    'driver_only' => $isStateless,
 
     /*
     |--------------------------------------------------------------------------
@@ -63,7 +65,7 @@ return [
     | Automatically disabled when `stateless` is true.
     |
     */
-    'migrations' => (bool) env('GOWA_MIGRATIONS', ! (bool) env('GOWA_STATELESS', env('GOWA_DRIVER_ONLY', false))),
+    'migrations' => (bool) env('GOWA_MIGRATIONS', ! $isStateless),
 
     /*
     |--------------------------------------------------------------------------
@@ -89,8 +91,8 @@ return [
     |
     */
     'auto_sync' => [
-        'inbound'  => (bool) env('GOWA_AUTO_SYNC_INBOUND', env('GOWA_WEBHOOK_AUTO_SYNC', ! (bool) env('GOWA_STATELESS', env('GOWA_DRIVER_ONLY', false)))),
-        'outbound' => (bool) env('GOWA_AUTO_SYNC_OUTBOUND', ! (bool) env('GOWA_STATELESS', env('GOWA_DRIVER_ONLY', false))),
+        'inbound'  => (bool) env('GOWA_AUTO_SYNC_INBOUND', env('GOWA_WEBHOOK_AUTO_SYNC', ! $isStateless)),
+        'outbound' => (bool) env('GOWA_AUTO_SYNC_OUTBOUND', ! $isStateless),
     ],
 
     /*
@@ -109,8 +111,8 @@ return [
     'webhook' => [
         'secret'           => env('GOWA_WEBHOOK_SECRET'),
         'path'             => env('GOWA_WEBHOOK_PATH', 'webhooks/gowa'),
-        'auto_sync'        => (bool) env('GOWA_WEBHOOK_AUTO_SYNC', ! (bool) env('GOWA_STATELESS', env('GOWA_DRIVER_ONLY', false))),
-        'record_calls'     => (bool) env('GOWA_WEBHOOK_RECORD_CALLS', ! (bool) env('GOWA_STATELESS', env('GOWA_DRIVER_ONLY', false))),
+        'auto_sync'        => (bool) env('GOWA_WEBHOOK_AUTO_SYNC', ! $isStateless),
+        'record_calls'     => (bool) env('GOWA_WEBHOOK_RECORD_CALLS', ! $isStateless),
         'log_requests'     => (bool) env('GOWA_LOG_WEBHOOKS', false),
         'log_channel'      => env('GOWA_LOG_CHANNEL'),
         'prune_after_days' => (int) env('GOWA_WEBHOOK_PRUNE_DAYS', 30),
